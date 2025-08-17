@@ -1,42 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Table</title>
+  <title>Live Sheet</title>
   <style>
     body {
       margin: 0;
-      height: 100vh;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      background: linear-gradient(270deg, #ffffff, #f9e6ff, #fff9e6, #ffe6f0);
-      background-size: 800% 800%;
-      animation: gradientBG 20s ease infinite;
+      justify-content: center;
+      height: 100vh;
+      background: #f5f5f5;
     }
-
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
     iframe {
+      width: 90%;
+      height: 80vh;
       border: none;
-      width: 1240px;
-      height: 638px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border-radius: 10px;
+    }
+    button {
+      margin: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #4caf50;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #45a049;
     }
   </style>
 </head>
 <body>
-  <iframe id="sheet" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRczN9A9Y_JM1gJY_pfr-XZX8te2aMYLZEN2eJybrDR7wiY-efCQgcHTfBD0_2iGjY-OhMukCVSlE7j/pubhtml?gid=1637798438&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
+  <button onclick="refreshSheet()">🔄 Refresh Now</button>
+
+  <iframe id="sheet" 
+    src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRczN9A9Y_JM1gJY_pfr-XZX8te2aMYLZEN2eJybrDR7wiY-efCQgcHTfBD0_2iGjY-OhMukCVSlE7j/pubhtml?gid=1637798438&amp;single=true&amp;widget=true&amp;headers=false">
+  </iframe>
+
   <script>
-  setInterval(() => {
-    document.getElementById('sheet').src = document.getElementById('sheet').src;
-  }, 30000); // reload every 30s
-  </script>  
+    function refreshSheet() {
+      const iframe = document.getElementById("sheet");
+      iframe.src = iframe.src; // reload iframe
+    }
+
+    // Auto-refresh every 5 seconds
+    setInterval(refreshSheet, 5000);
+  </script>
 </body>
 </html>
