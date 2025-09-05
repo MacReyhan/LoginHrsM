@@ -1,63 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Table</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login Hours Calculator</title>
   <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(270deg, #ffffff, #f9e6ff, #fff9e6, #ffe6f0);
-      background-size: 800% 800%;
-      animation: gradientBG 20s ease infinite;
+    :root{--accent:#ff5c8a;--card-bg:rgba(255,255,255,0.95)}
+    html,body{height:100%;margin:0}
+    body{
+      font-family:system-ui,Segoe UI,Roboto,Arial;
+      background:linear-gradient(135deg,pink 0%, #fff 100%);
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;
+      box-sizing:border-box;
     }
 
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    .container{width:100%;max-width:760px;margin:0 auto;position:relative;}
+    h1{margin:0 0 12px;font-size:20px;text-align:center}
+
+    .clear-btn{
+      position:fixed;
+      bottom:16px;
+      left:16px;
+      background:#fff;
+      color:#d00;
+      border:1px solid #ddd;
+      border-radius:8px;
+      padding:6px 10px;
+      cursor:pointer;
+      font-size:13px;
+      z-index:1000;
     }
 
-    iframe {
-      border: none;
-      width: 1240px;
-      height: 638px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      border-radius: 16px;
-      margin-bottom: 20px;
-    }
+    .entry{background:var(--card-bg);border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.06);margin-bottom:12px}
+    .row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+    .row label{min-width:80px;font-size:13px}
+    select,input[type=number]{flex:1;padding:8px;border-radius:8px;border:1px solid #e0e0e0;font-size:14px}
 
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      background: #6a2b8f;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      transition: background 0.3s;
-    }
+    .controls{display:flex;gap:10px;justify-content:center;margin:12px 0}
+    .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid rgba(0,0,0,0.06)}
 
-    button:hover {
-      background: #501f6d;
-    }
+    .total-card{max-width:420px;margin:18px auto;padding:14px;border-radius:16px;background:linear-gradient(180deg,#fff,#fff);box-shadow:0 8px 28px rgba(0,0,0,0.08);text-align:center}
+    .total-card .value{font-size:20px;font-weight:700;margin-bottom:6px}
+    .total-card .sub{color:#666;font-size:13px}
+
+    #clock{position:fixed;right:16px;bottom:16px;background:var(--card-bg);padding:8px 12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);font-weight:600}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;padding:20px}
+    .modal{background:#fff;border-radius:12px;max-width:720px;width:100%;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,0.25);}
+    .modal h3{margin-top:0}
+    .modal .entry-line{padding:8px 0;border-bottom:1px solid #f0f0f0}
+    .modal .summary{margin-top:12px;font-weight:600}
+    .close-btn{float:right;background:transparent;border:none;font-size:18px;cursor:pointer}
+
+    @media (max-width:600px){.row{flex-direction:column;align-items:stretch}.row label{min-width:0}.total-card{margin:16px 6px}#clock{position:static;margin-top:12px;right:auto;bottom:auto}}
   </style>
 </head>
 <body>
-  <iframe id="sheetFrame" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vRczN9A9Y_JM1gJY_pfr-XZX8te2aMYLZEN2eJybrDR7wiY-efCQgcHTfBD0_2iGjY-OhMukCVSlE7j/pubhtml?gid=1637798438&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
-  <button onclick="refreshFrame()">Refresh</button>
+  <div class="container">
+    <h1>Login Hours Calculator</h1>
+    <div id="entries"></div>
+    <div class="controls">
+      <button class="btn" id="addBtn">+ Add Entry</button>
+      <button class="btn secondary" id="detailsBtn">Show Calculations</button>
+    </div>
+    <div class="total-card" id="totalCard">
+      <div class="value" id="totalLogin">0 hrs 0 mins</div>
+      <div class="sub" id="targetText">Target Logout: —</div>
+    </div>
+  </div>
+  <button class="clear-btn" id="clearBtn">Clear Data</button>
+  <div id="clock">IST: --:--:--</div>
+  <div class="modal-overlay" id="modal">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="close-btn" id="closeModal">✕</button>
+      <h3>Calculations</h3>
+      <div id="modalContent"></div>
+      <div class="summary" id="modalSummary"></div>
+      <div style="text-align:right;margin-top:12px"><button class="btn" id="modalCloseBtn">Close</button></div>
+    </div>
+  </div>
+<script>
+const TARGET_MINUTES = 8*60 + 40;
+const entriesEl = document.getElementById('entries');
+const totalLoginEl = document.getElementById('totalLogin');
+const targetTextEl = document.getElementById('targetText');
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+const modalSummary = document.getElementById('modalSummary');
+let lastTotal = null;
+let fixedTargetTimestamp = null;
 
-  <script>
-    function refreshFrame() {
-      const iframe = document.getElementById('sheetFrame');
-      iframe.src = iframe.src;
-    }
-  </script>
+function generateSlots(){const out=[{value:"",label:"--"}];for(let h=0;h<24;h++){for(let m=0;m<60;m+=30){const labelHour=h%12===0?12:h%12;const ampm=h<12?'AM':'PM';out.push({value:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`,label:`${labelHour}:${String(m).padStart(2,'0')} ${ampm}`});}}return out;}
+const SLOTS = generateSlots();
+
+function createSelect(name){const sel=document.createElement('select');sel.name=name;SLOTS.forEach(s=>{const o=document.createElement('option');o.value=s.value;o.textContent=s.label;sel.appendChild(o)});return sel;}
+
+function saveEntries(){const data=[];document.querySelectorAll('.entry').forEach(entry=>{const selects=entry.querySelectorAll('select');const inputs=entry.querySelectorAll('input');data.push({loginSlot:selects[0].value,loginOffset:inputs[0].value,logoutSlot:selects[1].value,logoutOffset:inputs[1].value,break:inputs[2].value});});localStorage.setItem('loginEntries',JSON.stringify(data));}
+
+function loadEntries(){const data=JSON.parse(localStorage.getItem('loginEntries')||'[]');if(data.length){entriesEl.innerHTML='';data.forEach(d=>addEntry(d));}}
+
+function clearEntries(){localStorage.removeItem('loginEntries');entriesEl.innerHTML='';addEntry();computeAndDisplayTotal();}
+
+document.getElementById('clearBtn').addEventListener('click',clearEntries);
+
+function addEntry(prefill){const div=document.createElement('div');div.className='entry';
+  const row1=document.createElement('div');row1.className='row';const lbl1=document.createElement('label');lbl1.textContent='Login';const loginSlot=createSelect('loginSlot');const loginOffset=document.createElement('input');loginOffset.type='number';loginOffset.min=0;loginOffset.placeholder='offset (mins)';row1.append(lbl1,loginSlot,loginOffset);
+  const row2=document.createElement('div');row2.className='row';const lbl2=document.createElement('label');lbl2.textContent='Logout';const logoutSlot=createSelect('logoutSlot');const logoutOffset=document.createElement('input');logoutOffset.type='number';logoutOffset.min=0;logoutOffset.placeholder='offset (mins)';row2.append(lbl2,logoutSlot,logoutOffset);
+  const row3=document.createElement('div');row3.className='row';const lbl3=document.createElement('label');lbl3.textContent='Break';const breakInput=document.createElement('input');breakInput.type='number';breakInput.min=0;breakInput.placeholder='mins';row3.append(lbl3,breakInput);
+  [loginSlot,loginOffset,logoutSlot,logoutOffset,breakInput].forEach(el=>el.addEventListener('input',()=>{lastTotal=null;fixedTargetTimestamp=null;computeAndDisplayTotal();saveEntries();}))
+  div.append(row1,row2,row3);entriesEl.appendChild(div);
+  if(prefill){loginSlot.value=prefill.loginSlot;loginOffset.value=prefill.loginOffset;logoutSlot.value=prefill.logoutSlot;logoutOffset.value=prefill.logoutOffset;breakInput.value=prefill.break;}
+  computeAndDisplayTotal();}
+
+function parseSlotToMinutes(slot){if(!slot)return null;const[h,m]=slot.split(':').map(Number);return h*60+m}
+function pad(n){return String(n).padStart(2,'0')}
+function formatMinutesToClock(mins){mins=((mins%1440)+1440)%1440;const h=Math.floor(mins/60);const m=mins%60;const hh=h%12===0?12:h%12;const ap=h<12?'AM':'PM';return `${hh}:${pad(m)} ${ap}`}
+
+function computeEntries(){const entries=Array.from(document.querySelectorAll('.entry'));const details=[];let total=0;entries.forEach((entry,idx)=>{const selects=entry.querySelectorAll('select');const inputs=entry.querySelectorAll('input');const lSlot=selects[0].value;const loff=parseInt(inputs[0].value)||0;const outSlot=selects[1].value;const ooff=parseInt(inputs[1].value)||0;const brk=parseInt(inputs[2].value)||0;if(!lSlot||!outSlot){return;}const loginMin=parseSlotToMinutes(lSlot)+30-loff;let logoutMin=parseSlotToMinutes(outSlot)+ooff;if(logoutMin<=loginMin)logoutMin+=24*60;const worked=Math.max(0,logoutMin-loginMin-brk);total+=worked;details.push({index:idx+1,loginTimeMin:loginMin,logoutTimeMin:logoutMin,break:brk,worked});});return {details,total};}
+
+function computeAndDisplayTotal(){const{details,total}=computeEntries();const hrs=Math.floor(total/60);const mins=Math.floor(total%60);totalLoginEl.textContent=`${hrs} hrs ${mins} mins`;if(lastTotal===null||lastTotal!==total){lastTotal=total;if(total>=TARGET_MINUTES){fixedTargetTimestamp=null;targetTextEl.textContent='yippeeeee logout kore daoooo';}else{fixedTargetTimestamp=Date.now()+(TARGET_MINUTES-total)*60000;const t=new Date(fixedTargetTimestamp);targetTextEl.textContent='Target Logout: '+new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(t)+' IST';}}}
+
+function showDetails(){const{details,total}=computeEntries();modalContent.innerHTML='';details.forEach((d,i)=>{const div=document.createElement('div');div.className='entry-line';const loginClock=formatMinutesToClock(d.loginTimeMin);const logoutClock=formatMinutesToClock(d.logoutTimeMin);div.innerHTML=`<div><strong>Entry ${d.index}:</strong> ${loginClock} - ${logoutClock} - break ${d.break} mins = ${d.worked} mins</div>`;modalContent.appendChild(div);});const hrs=Math.floor(total/60);const mins=Math.floor(total%60);const remaining=Math.max(0,TARGET_MINUTES-total);modalSummary.innerHTML=`Total: ${hrs} hrs ${mins} mins<br>Remaining to ${Math.floor(TARGET_MINUTES/60)}:${pad(TARGET_MINUTES%60)} = ${Math.floor(remaining/60)} hrs ${remaining%60} mins`;if(remaining<=0){modalSummary.innerHTML+=`<br><strong>yippeeeee logout kore daoooo</strong>`}else{const targetDate=new Date(Date.now()+remaining*60000);const fmt=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});modalSummary.innerHTML+=`<br>Target Logout (from now): ${fmt.format(targetDate)} IST`;}modal.style.display='flex';}
+
+function hideModal(){modal.style.display='none'}
+function updateClock(){const now=new Date();const fmtNow=new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit'});document.getElementById('clock').textContent='IST: '+fmtNow.format(now);}
+
+document.getElementById('addBtn').addEventListener('click',()=>addEntry());document.getElementById('detailsBtn').addEventListener('click',showDetails);document.getElementById('closeModal').addEventListener('click',hideModal);document.getElementById('modalCloseBtn').addEventListener('click',hideModal);setInterval(updateClock,1000);
+loadEntries();if(!document.querySelectorAll('.entry').length)addEntry();
+</script>
 </body>
 </html>
